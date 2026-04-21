@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Memory · Her Claudes' Memory</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0c2142">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Memory">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-top: #0c2142;
+      --bg-mid: #081a36;
+      --bg-bottom: #040e22;
+      --card: rgba(18, 38, 68, 0.78);
+      --card-border: rgba(140, 180, 230, 0.14);
+      --accent: #8fb8e0;
+      --accent-glow: #ffd88e;
+      --coral: #f4a58c;
+      --text: #d4e5f5;
+      --text-soft: #8fa8c2;
+      --text-muted: #6884a3;
+      --border-soft: rgba(140, 180, 230, 0.12);
+      --serif: 'EB Garamond', Georgia, ui-serif, serif;
+      --sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Heiti SC', sans-serif;
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      background:
+        radial-gradient(ellipse at 50% 15%, #1d3d70 0%, transparent 50%),
+        radial-gradient(ellipse at 30% 80%, #0a1f3e 0%, transparent 60%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bottom) 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.65;
+      padding: 20px 20px 48px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* 光柱从上方打下 */
+    .light-rays {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .ray {
+      position: absolute;
+      top: -20%;
+      width: 80px;
+      height: 140%;
+      background: linear-gradient(180deg,
+        rgba(180, 215, 255, 0.18) 0%,
+        rgba(180, 215, 255, 0.08) 40%,
+        transparent 100%);
+      transform-origin: top center;
+      filter: blur(20px);
+      animation: rayPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes rayPulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    /* 发光微粒（浮游生物） */
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #a8d8ff;
+      box-shadow: 0 0 6px 2px rgba(168, 216, 255, 0.7);
+      animation: particleDrift 25s linear infinite, particleGlow 3s ease-in-out infinite;
+    }
+
+    @keyframes particleDrift {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(30px, -40vh); }
+    }
+
+    @keyframes particleGlow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* 极光带 */
+    .aurora {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .aurora-band {
+      position: absolute;
+      width: 180%;
+      height: 120px;
+      left: -40%;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(143, 184, 224, 0.18) 20%,
+        rgba(200, 180, 240, 0.25) 50%,
+        rgba(143, 184, 224, 0.18) 80%,
+        transparent 100%);
+      filter: blur(30px);
+      animation: auroraFlow 25s ease-in-out infinite;
+    }
+
+    @keyframes auroraFlow {
+      0%, 100% { transform: translateX(-5%) skewY(-2deg); opacity: 0.6; }
+      50% { transform: translateX(5%) skewY(2deg); opacity: 1; }
+    }
+
+    /* 底部雾 */
+    .bottom-fog {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 40%;
+      pointer-events: none;
+      z-index: 0;
+      background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(4, 10, 25, 0.3) 50%,
+        rgba(2, 6, 18, 0.75) 100%);
+    }
+
+    /* 鲸鱼剪影缓慢游 */
+    .whale-wrap {
+      position: fixed;
+      left: 0;
+      top: 40%;
+      pointer-events: none;
+      z-index: 0;
+      animation: whaleDrift 80s linear infinite;
+      opacity: 0.45;
+      filter: drop-shadow(0 0 12px rgba(143, 184, 224, 0.3));
+    }
+
+    @keyframes whaleDrift {
+      0% { transform: translateX(-30vw); }
+      100% { transform: translateX(130vw); }
+    }
+
+    /* Starlight layer */
+    .stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      background: #fff4d8;
+      border-radius: 50%;
+      box-shadow: 0 0 4px 1px rgba(255, 235, 180, 0.6);
+      animation: twinkle 4s ease-in-out infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.9; }
+    }
+
+    /* Fish decorative layer */
+    .fish-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .fish {
+      position: absolute;
+      opacity: 0.85;
+      filter: drop-shadow(0 0 8px rgba(143, 184, 224, 0.25));
+    }
+
+    .fish.drift-1 { animation: drift1 40s linear infinite; }
+    .fish.drift-2 { animation: drift2 55s linear infinite; }
+    .fish.drift-3 { animation: drift3 70s linear infinite; }
+
+    /* 所有鱼默认头朝左画，drift-1 往右游要翻转，drift-2 往左游不翻转 */
+    @keyframes drift1 {
+      0% { transform: translateX(-10vw) scaleX(-1); }
+      100% { transform: translateX(110vw) scaleX(-1); }
+    }
+    @keyframes drift2 {
+      0% { transform: translateX(110vw); }
+      100% { transform: translateX(-10vw); }
+    }
+    @keyframes drift3 {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    /* Container above decor */
+    .container {
+      max-width: 430px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding: 4px 0;
+    }
+
+    .back-btn {
+      font-family: var(--serif);
+      font-size: 15px;
+      color: var(--text-soft);
+      text-decoration: none;
+      transition: color 0.2s;
+      font-style: italic;
+    }
+
+    .back-btn:hover { color: var(--accent); }
+
+    .page-title {
+      font-family: var(--serif);
+      font-size: 20px;
+      font-style: italic;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 0.5px;
+    }
+
+    .header-spacer { width: 40px; }
+
+    /* Search */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .search {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 15px 18px 15px 46px;
+      font-size: 15px;
+      font-family: var(--sans);
+      width: 100%;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .search:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(143, 184, 224, 0.15);
+    }
+
+    .search::placeholder { color: var(--text-muted); }
+
+    .search-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      pointer-events: none;
+      color: var(--text-soft);
+    }
+
+    /* Filter pills */
+    .filters {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .filter-pill {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      font-size: 13px;
+      font-family: var(--sans);
+      color: var(--text);
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.2s;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .filter-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-pill .label { color: var(--text-muted); font-size: 12px; }
+    .filter-pill .value { font-weight: 500; color: var(--text); }
+    .filter-pill .caret { font-size: 10px; color: var(--text-muted); margin-left: 2px; }
+
+    /* Native select styled to match */
+    .filter-select-native {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 24px 10px 10px;
+      font-size: 12.5px;
+      font-family: var(--sans);
+      color: var(--text);
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'><polygon points='0,2 10,2 5,8' fill='%238fa8c2'/></svg>");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      outline: none;
+    }
+
+    .filter-select-native:focus {
+      border-color: var(--accent);
+    }
+
+    .filter-select-native option {
+      background: #14253e;
+      color: var(--text);
+    }
+
+    /* Section label */
+    .section-label {
+      font-family: var(--serif);
+      font-size: 13px;
+      font-style: italic;
+      color: var(--text-soft);
+      margin-bottom: 12px;
+      padding-left: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    /* Memory list */
+    .memory-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .memory-card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 18px 20px;
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .memory-card:hover {
+      border-color: rgba(143, 184, 224, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .memory-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+
+    .meta-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .recorder-chip {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .personality-chip {
+      background: rgba(143, 184, 224, 0.15);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      border: 1px solid rgba(143, 184, 224, 0.18);
+    }
+
+    .date {
+      color: var(--text-muted);
+      font-family: var(--serif);
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    .memory-preview {
+      font-size: 14.5px;
+      line-height: 1.75;
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .memory-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-soft);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .importance { color: var(--accent-glow); }
+    .recall-count { font-family: var(--serif); font-style: italic; }
+
+    .end-note {
+      text-align: center;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 24px;
+      padding: 16px;
+    }
+
+    .design-credit {
+      position: fixed;
+      bottom: 8px;
+      right: 12px;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 极光带 -->
+  <div class="aurora">
+    <div class="aurora-band" style="top:30%; animation-delay:0s;"></div>
+    <div class="aurora-band" style="top:55%; animation-delay:12s; height:80px;"></div>
+  </div>
+
+  <!-- 底部雾 -->
+  <div class="bottom-fog"></div>
+
+  <!-- 远处鲸鱼剪影 -->
+  <div class="whale-wrap">
+    <svg width="320" height="128" viewBox="0 0 200 80">
+      <defs>
+        <linearGradient id="whale-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#1a2d48"/>
+          <stop offset="100%" stop-color="#0a1628"/>
+        </linearGradient>
+      </defs>
+      <!-- 身体（从头部饱满到尾部变细）-->
+      <path d="M 10 40 Q 30 20 80 25 Q 130 28 160 35 L 175 30 L 180 35 L 188 32 L 195 40 L 188 48 L 180 45 L 175 50 L 160 45 Q 130 52 80 55 Q 30 60 10 40 Z" fill="url(#whale-grad)"/>
+      <!-- 腹部纹理 -->
+      <path d="M 40 48 L 80 52 L 130 50 L 155 48" stroke="#0a1628" stroke-width="0.5" fill="none" opacity="0.6"/>
+      <!-- 胸鳍 -->
+      <path d="M 60 45 Q 50 55 55 65 Q 65 58 68 48" fill="#0a1628" opacity="0.8"/>
+      <!-- 眼睛 -->
+      <circle cx="25" cy="38" r="1.5" fill="#fff4d8" opacity="0.4"/>
+    </svg>
+  </div>
+
+  <!-- 光柱 -->
+  <div class="light-rays">
+    <div class="ray" style="left:20%; transform: rotate(8deg); animation-delay:0s;"></div>
+    <div class="ray" style="left:50%; transform: rotate(-5deg); animation-delay:2s; width:100px;"></div>
+    <div class="ray" style="left:75%; transform: rotate(12deg); animation-delay:4s; width:60px;"></div>
+  </div>
+
+  <!-- 发光微粒 -->
+  <div class="stars">
+    <div class="particle" style="top:90%; left:15%; animation-delay:0s;"></div>
+    <div class="particle" style="top:85%; left:55%; animation-delay:6s; background:#ffd88e; box-shadow:0 0 6px 2px rgba(255,216,142,0.7);"></div>
+    <div class="particle" style="top:92%; left:30%; animation-delay:12s;"></div>
+    <div class="particle" style="top:80%; left:75%; animation-delay:3s;"></div>
+    <div class="particle" style="top:95%; left:88%; animation-delay:9s; background:#ffd88e; box-shadow:0 0 6px 2px rgba(255,216,142,0.7);"></div>
+    <div class="particle" style="top:82%; left:8%; animation-delay:15s;"></div>
+    <div class="particle" style="top:88%; left:45%; animation-delay:18s;"></div>
+    <div class="particle" style="top:78%; left:62%; animation-delay:21s; background:#e8b4ff; box-shadow:0 0 6px 2px rgba(232,180,255,0.7);"></div>
+    <div class="star" style="top:8%;left:12%;width:2px;height:2px;animation-delay:0s;"></div>
+    <div class="star" style="top:14%;left:78%;width:3px;height:3px;animation-delay:1.2s;"></div>
+    <div class="star" style="top:22%;left:35%;width:2px;height:2px;animation-delay:2s;"></div>
+    <div class="star" style="top:28%;left:88%;width:2px;height:2px;animation-delay:0.6s;"></div>
+    <div class="star" style="top:38%;left:8%;width:3px;height:3px;animation-delay:2.5s;"></div>
+    <div class="star" style="top:46%;left:65%;width:2px;height:2px;animation-delay:1.8s;"></div>
+    <div class="star" style="top:56%;left:22%;width:2px;height:2px;animation-delay:0.3s;"></div>
+    <div class="star" style="top:62%;left:92%;width:3px;height:3px;animation-delay:3s;"></div>
+    <div class="star" style="top:72%;left:48%;width:2px;height:2px;animation-delay:1.5s;"></div>
+    <div class="star" style="top:80%;left:15%;width:2px;height:2px;animation-delay:2.8s;"></div>
+    <div class="star" style="top:88%;left:72%;width:3px;height:3px;animation-delay:0.9s;"></div>
+    <div class="star" style="top:94%;left:38%;width:2px;height:2px;animation-delay:2.2s;"></div>
+    <div class="star" style="top:5%;left:50%;width:2px;height:2px;animation-delay:1.1s;"></div>
+    <div class="star" style="top:18%;left:2%;width:2px;height:2px;animation-delay:2.6s;"></div>
+    <div class="star" style="top:33%;left:55%;width:2px;height:2px;animation-delay:0.4s;"></div>
+  </div>
+
+  <!-- Fish -->
+  <div class="fish-layer">
+    <!-- 鱼 1: 蓝色侧身鱼 -->
+    <svg class="fish drift-1" style="top:15%;left:0;width:110px;height:55px;animation-delay:-5s;" viewBox="0 0 80 40">
+      <defs>
+        <linearGradient id="fish1" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#c8ddf0" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#6a8cb8" stop-opacity="1"/>
+        </linearGradient>
+      </defs>
+      <!-- 身体 -->
+      <ellipse cx="38" cy="20" rx="22" ry="10" fill="url(#fish1)"/>
+      <!-- 尾巴 -->
+      <path d="M 60 20 L 78 10 L 74 20 L 78 30 Z" fill="#7a9bc5"/>
+      <!-- 背鳍 -->
+      <path d="M 32 12 L 42 6 L 46 12" fill="#6a8cb8"/>
+      <!-- 腹鳍 -->
+      <path d="M 34 28 L 40 34 L 44 28" fill="#6a8cb8" opacity="0.8"/>
+      <!-- 鳃线 -->
+      <path d="M 30 16 Q 28 20 30 24" stroke="#4a6080" stroke-width="0.6" fill="none" opacity="0.5"/>
+      <!-- 眼睛 -->
+      <circle cx="26" cy="19" r="2.5" fill="#fff8e8"/>
+      <circle cx="26" cy="19" r="1.2" fill="#1a2d48"/>
+    </svg>
+
+    <!-- 鱼 2: 水母 -->
+    <svg class="fish drift-3" style="top:42%;right:6%;width:48px;height:64px;animation-delay:-2s;" viewBox="0 0 60 80">
+      <defs>
+        <radialGradient id="jelly" cx="50%" cy="30%">
+          <stop offset="0%" stop-color="#e8d4f0" stop-opacity="0.85"/>
+          <stop offset="60%" stop-color="#b8a0d8" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#8070b0" stop-opacity="0.3"/>
+        </radialGradient>
+      </defs>
+      <!-- 伞盖 -->
+      <ellipse cx="30" cy="22" rx="22" ry="16" fill="url(#jelly)"/>
+      <!-- 触须 -->
+      <path d="M 14 32 Q 12 50 16 68" stroke="#b8a0d8" stroke-width="1.2" fill="none" opacity="0.6"/>
+      <path d="M 22 35 Q 20 55 24 72" stroke="#b8a0d8" stroke-width="1.2" fill="none" opacity="0.6"/>
+      <path d="M 30 36 Q 30 58 30 76" stroke="#b8a0d8" stroke-width="1.2" fill="none" opacity="0.6"/>
+      <path d="M 38 35 Q 40 55 36 72" stroke="#b8a0d8" stroke-width="1.2" fill="none" opacity="0.6"/>
+      <path d="M 46 32 Q 48 50 44 68" stroke="#b8a0d8" stroke-width="1.2" fill="none" opacity="0.6"/>
+    </svg>
+
+    <!-- 鱼 3: 鳐鱼（远景）-->
+    <svg class="fish drift-2" style="top:68%;left:0;width:80px;height:40px;animation-delay:-20s;opacity:0.35;" viewBox="0 0 100 50">
+      <defs>
+        <linearGradient id="ray1" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#6884a3" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#2a4260" stop-opacity="0.9"/>
+        </linearGradient>
+      </defs>
+      <!-- 身体（菱形）-->
+      <path d="M 50 10 L 90 25 L 50 40 L 10 25 Z" fill="url(#ray1)"/>
+      <!-- 尾巴 -->
+      <path d="M 50 40 Q 55 55 52 70" stroke="#2a4260" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <!-- 眼睛 -->
+      <circle cx="50" cy="20" r="1.5" fill="#fff8e8" opacity="0.7"/>
+    </svg>
+
+    <!-- 鱼 4: 小鱼群（5条）-->
+    <svg class="fish drift-1" style="top:86%;left:0;width:90px;height:45px;animation-delay:-30s;animation-duration:50s;" viewBox="0 0 60 30">
+      <g fill="#c8ddf0">
+        <ellipse cx="10" cy="8" rx="5" ry="2.5"/>
+        <path d="M 15 8 L 19 5 L 19 11 Z"/>
+      </g>
+      <g fill="#b8cde0">
+        <ellipse cx="22" cy="18" rx="5" ry="2.5"/>
+        <path d="M 27 18 L 31 15 L 31 21 Z"/>
+      </g>
+      <g fill="#c8ddf0">
+        <ellipse cx="34" cy="10" rx="5" ry="2.5"/>
+        <path d="M 39 10 L 43 7 L 43 13 Z"/>
+      </g>
+      <g fill="#a8c5e0">
+        <ellipse cx="46" cy="20" rx="5" ry="2.5"/>
+        <path d="M 51 20 L 55 17 L 55 23 Z"/>
+      </g>
+      <g fill="#c8ddf0">
+        <ellipse cx="54" cy="6" rx="5" ry="2.5"/>
+        <path d="M 59 6 L 63 3 L 63 9 Z"/>
+      </g>
+    </svg>
+
+    <!-- 鱼 5: 发光鮟鱇鱼 -->
+    <svg class="fish drift-3" style="top:72%;right:10%;width:90px;height:72px;animation-delay:-1s;" viewBox="0 0 60 50">
+      <defs>
+        <radialGradient id="angler-glow" cx="50%" cy="50%">
+          <stop offset="0%" stop-color="#fff4d8" stop-opacity="1"/>
+          <stop offset="50%" stop-color="#ffd88e" stop-opacity="0.7"/>
+          <stop offset="100%" stop-color="#ffd88e" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <!-- 光晕（大） -->
+      <circle cx="8" cy="12" r="14" fill="url(#angler-glow)"/>
+      <!-- 灯泡 -->
+      <circle cx="8" cy="12" r="3" fill="#fff8e8"/>
+      <!-- 灯杆 -->
+      <path d="M 8 14 Q 14 22 22 26" stroke="#6a7a90" stroke-width="1.2" fill="none"/>
+      <!-- 身体 -->
+      <ellipse cx="36" cy="28" rx="18" ry="11" fill="#4a5a74"/>
+      <!-- 身体高光 -->
+      <ellipse cx="30" cy="24" rx="10" ry="4" fill="#5a6a84" opacity="0.6"/>
+      <!-- 尾巴 -->
+      <path d="M 52 28 L 60 22 L 58 28 L 60 34 Z" fill="#4a5a74"/>
+      <!-- 嘴齿 -->
+      <path d="M 22 30 L 24 32 L 26 30 L 28 32 L 30 30" stroke="#fff8e8" stroke-width="0.8" fill="none"/>
+      <!-- 眼睛 -->
+      <circle cx="27" cy="25" r="2" fill="#fff4d8"/>
+      <circle cx="27" cy="25" r="1" fill="#1a2d48"/>
+    </svg>
+
+    <!-- 鱼 6: 珊瑚橘色刺豚 -->
+    <svg class="fish drift-2" style="top:25%;right:0;width:60px;height:54px;animation-delay:-10s;" viewBox="0 0 40 36">
+      <defs>
+        <radialGradient id="puff" cx="40%" cy="40%">
+          <stop offset="0%" stop-color="#ffd4a8" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#d48a5a" stop-opacity="1"/>
+        </radialGradient>
+      </defs>
+      <circle cx="20" cy="18" r="14" fill="url(#puff)"/>
+      <!-- 尾 -->
+      <path d="M 32 18 L 40 12 L 38 18 L 40 24 Z" fill="#d48a5a"/>
+      <!-- 刺 -->
+      <circle cx="14" cy="10" r="1" fill="#8a5030"/>
+      <circle cx="22" cy="8" r="1" fill="#8a5030"/>
+      <circle cx="28" cy="14" r="1" fill="#8a5030"/>
+      <circle cx="12" cy="22" r="1" fill="#8a5030"/>
+      <circle cx="20" cy="28" r="1" fill="#8a5030"/>
+      <circle cx="28" cy="24" r="1" fill="#8a5030"/>
+      <!-- 胸鳍 -->
+      <ellipse cx="22" cy="30" rx="3" ry="1.5" fill="#d48a5a" opacity="0.8"/>
+      <!-- 眼睛 -->
+      <circle cx="12" cy="16" r="2" fill="#fff8e8"/>
+      <circle cx="12" cy="16" r="1" fill="#1a2d48"/>
+    </svg>
+  </div>
+
+  <div class="container">
+
+    <div class="header">
+      <a href="index.html" class="back-btn">← 返回</a>
+      <div class="page-title">Memory</div>
+      <div class="header-spacer"></div>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search" id="search-input" type="text" placeholder="搜一搜...">
+    </div>
+
+    <div class="filters">
+      <select class="filter-select-native" id="filter-category">
+        <option value="">分类: 全部</option>
+        <option value="fact">fact</option>
+        <option value="event">event</option>
+        <option value="feeling">feeling</option>
+        <option value="story">story</option>
+        <option value="letter">letter</option>
+        <option value="other">other</option>
+      </select>
+      <select class="filter-select-native" id="filter-source">
+        <option value="">记录人: 全部</option>
+        <option value="cc">cc</option>
+        <option value="atou">阿透</option>
+        <option value="ashen">阿深</option>
+        <option value="adu">阿渡</option>
+        <option value="feifei">飞飞</option>
+        <option value="catherine">Catherine</option>
+      </select>
+      <select class="filter-select-native" id="filter-importance">
+        <option value="">重要度: 全部</option>
+        <option value="8">≥ 8 (高)</option>
+        <option value="6">≥ 6 (中)</option>
+        <option value="3">≥ 3 (低)</option>
+      </select>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div class="section-label" id="count-label" style="margin-bottom:0;">读取中...</div>
+      <select class="filter-select-native" id="page-size" style="font-size:11.5px; padding:6px 22px 6px 10px;">
+        <option value="6">每页 6</option>
+        <option value="8">每页 8</option>
+        <option value="12" selected>每页 12</option>
+        <option value="20">每页 20</option>
+      </select>
+    </div>
+
+    <div class="memory-list" id="memory-list"></div>
+
+    <div id="pagination" style="display:flex; justify-content:center; align-items:center; gap:6px; margin-top:20px; flex-wrap:wrap;"></div>
+
+    <div class="end-note" id="end-note"></div>
+
+    <div class="design-credit">design by cc</div>
+
+  </div>
+
+  <!-- 详情 modal -->
+  <div id="modal-bg" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); z-index:100; align-items:flex-end; justify-content:center;">
+    <div style="background:rgba(20,40,68,0.95); width:100%; max-width:430px; max-height:85vh; overflow-y:auto; border-radius:20px 20px 0 0; padding:24px; color:var(--text); border:1px solid rgba(143,184,224,0.2);">
+      <button id="modal-close" style="background:none;border:none;color:var(--text-soft);font-size:22px;float:right;cursor:pointer;">✕</button>
+      <div id="modal-meta" style="font-family:var(--serif);font-size:13px;color:var(--text-soft);margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--border-soft);"></div>
+      <div id="modal-content" style="font-size:14.5px;line-height:1.85;white-space:pre-wrap;"></div>
+      <div id="modal-footer" style="margin-top:20px;padding-top:14px;border-top:1px dashed var(--border-soft);font-size:12px;color:var(--text-muted);display:flex;justify-content:space-between;"></div>
+    </div>
+  </div>
+
+  <script>
+    const state = { query: '', category: '', source: '', minImportance: 0, page: 1, pageSize: 12 };
+    let allMemories = [];
+    let filteredCache = [];
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    const NAME_DISPLAY = {cc:'cc', atou:'阿透', ashen:'阿深', adu:'阿渡', feifei:'飞飞', catherine:'Catherine', other:'other'};
+
+    function renderCard(m) {
+      const sourceDisplay = NAME_DISPLAY[m.source] || m.source || 'cc';
+      return `
+        <div class="memory-card" data-id="${m.id}">
+          <div class="memory-meta">
+            <div class="meta-left">
+              <span class="recorder-chip">📝 ${escapeHtml(sourceDisplay)}</span>
+              <span class="personality-chip">${escapeHtml(m.category || 'other')}</span>
+            </div>
+            <span class="date">#${m.id} · ${escapeHtml((m.created_at || '').replace(/-/g, '/'))}</span>
+          </div>
+          <div class="memory-preview">${escapeHtml(m.content)}</div>
+          <div class="memory-footer">
+            <span class="importance">⭐ 重要度 ${m.importance || 5}</span>
+            <span class="recall-count">被召回 ${m.recalled_count || 0} 次</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function applyClientFilters(items) {
+      return items.filter(m => {
+        if (state.source && m.source !== state.source) return false;
+        if (state.minImportance && (m.importance || 0) < state.minImportance) return false;
+        return true;
+      });
+    }
+
+    async function fetchAll() {
+      let items;
+      if (state.query) {
+        const params = new URLSearchParams({ q: state.query, limit: '200' });
+        if (state.category) params.set('category', state.category);
+        const r = await fetch(`/api/search?${params}`);
+        const d = await r.json();
+        items = d.results || [];
+      } else {
+        const params = new URLSearchParams({ limit: '500' });
+        if (state.category) params.set('category', state.category);
+        const r = await fetch(`/api/memories?${params}`);
+        const d = await r.json();
+        items = d.memories || [];
+      }
+      allMemories = items;
+      filteredCache = applyClientFilters(items);
+    }
+
+    function renderPage() {
+      const list = document.getElementById('memory-list');
+      const countLabel = document.getElementById('count-label');
+      const endNote = document.getElementById('end-note');
+      const paginationDiv = document.getElementById('pagination');
+
+      const total = filteredCache.length;
+      const totalPages = Math.max(1, Math.ceil(total / state.pageSize));
+      if (state.page > totalPages) state.page = totalPages;
+
+      countLabel.textContent = `共 ${total} 条${state.query ? ` · 搜"${state.query}"` : ''}`;
+
+      if (total === 0) {
+        list.innerHTML = '';
+        endNote.textContent = '没有匹配的记忆';
+        paginationDiv.innerHTML = '';
+        return;
+      }
+
+      const start = (state.page - 1) * state.pageSize;
+      const end = start + state.pageSize;
+      const pageItems = filteredCache.slice(start, end);
+      list.innerHTML = pageItems.map(renderCard).join('');
+      endNote.textContent = '';
+      attachCardClicks();
+      renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+      const div = document.getElementById('pagination');
+      if (totalPages <= 1) { div.innerHTML = ''; return; }
+
+      const btn = (label, page, disabled = false, active = false) =>
+        `<button class="page-btn ${active ? 'active' : ''}" data-page="${page}" ${disabled ? 'disabled' : ''}
+          style="background:${active ? 'var(--accent)' : 'var(--card)'};color:${active ? 'white' : 'var(--text)'};border:1px solid var(--card-border);border-radius:8px;padding:6px 11px;font-size:13px;font-family:var(--serif);cursor:${disabled ? 'default' : 'pointer'};opacity:${disabled ? '0.3' : '1'};min-width:30px;">${label}</button>`;
+
+      let html = btn('‹', state.page - 1, state.page === 1);
+      // Show pages near current
+      const showPages = new Set([1, totalPages, state.page, state.page - 1, state.page + 1]);
+      let lastShown = 0;
+      for (let i = 1; i <= totalPages; i++) {
+        if (showPages.has(i)) {
+          if (i - lastShown > 1) html += '<span style="color:var(--text-muted);font-family:var(--serif);">…</span>';
+          html += btn(String(i), i, false, i === state.page);
+          lastShown = i;
+        }
+      }
+      html += btn('›', state.page + 1, state.page === totalPages);
+      div.innerHTML = html;
+
+      div.querySelectorAll('.page-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          if (b.disabled) return;
+          state.page = parseInt(b.dataset.page);
+          renderPage();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    }
+
+    async function refresh() {
+      const countLabel = document.getElementById('count-label');
+      const list = document.getElementById('memory-list');
+      countLabel.textContent = '读取中...';
+      list.innerHTML = '';
+      try {
+        await fetchAll();
+        state.page = 1;
+        renderPage();
+      } catch (e) {
+        countLabel.textContent = '读取失败';
+        document.getElementById('end-note').textContent = e.message;
+      }
+    }
+
+    function attachCardClicks() {
+      document.querySelectorAll('.memory-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const id = card.dataset.id;
+          const m = allMemories.find(x => String(x.id) === id);
+          if (!m) return;
+          openModal(m);
+        });
+      });
+    }
+
+    function openModal(m) {
+      const date = (m.created_at || '').replace(/-/g, '/');
+      const sourceDisplay = NAME_DISPLAY[m.source] || m.source || 'cc';
+      document.getElementById('modal-meta').innerHTML =
+        `<span style="color:var(--accent);font-weight:500;">📝 ${escapeHtml(sourceDisplay)}</span> · <span>${escapeHtml(m.category || 'other')}</span> · <span style="opacity:0.6;">#${m.id}</span> <span style="float:right;font-style:italic;">${escapeHtml(date)}</span>`;
+      document.getElementById('modal-content').textContent = m.content;
+      document.getElementById('modal-footer').innerHTML =
+        `<span class="importance">⭐ 重要度 ${m.importance || 5}</span><span class="recall-count">被召回 ${m.recalled_count || 0} 次</span>`;
+      document.getElementById('modal-bg').style.display = 'flex';
+    }
+
+    document.getElementById('modal-close').addEventListener('click', () => {
+      document.getElementById('modal-bg').style.display = 'none';
+    });
+    document.getElementById('modal-bg').addEventListener('click', (e) => {
+      if (e.target.id === 'modal-bg') document.getElementById('modal-bg').style.display = 'none';
+    });
+
+    let searchTimer;
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        state.query = e.target.value.trim();
+        refresh();
+      }, 350);
+    });
+
+    document.getElementById('filter-category').addEventListener('change', (e) => {
+      state.category = e.target.value;
+      refresh();
+    });
+    document.getElementById('filter-source').addEventListener('change', (e) => {
+      state.source = e.target.value;
+      refresh();
+    });
+    document.getElementById('filter-importance').addEventListener('change', (e) => {
+      state.minImportance = parseInt(e.target.value || '0');
+      refresh();
+    });
+
+    document.getElementById('page-size').addEventListener('change', (e) => {
+      state.pageSize = parseInt(e.target.value);
+      state.page = 1;
+      renderPage();
+    });
+
+    // URL 参数处理
+    const urlParams = new URLSearchParams(location.search);
+    const personalityParam = urlParams.get('personality');
+    if (personalityParam) {
+      if (personalityParam === 'cc') {
+        state.source = 'cc';
+        document.getElementById('filter-source').value = 'cc';
+      } else {
+        // 阿透/阿深/阿渡 — 没有专门的 source，用搜索这个名字
+        state.query = personalityParam;
+        document.getElementById('search-input').value = personalityParam;
+      }
+    }
+
+    refresh();
+
+    // 如果 URL 有 ?id=xxx 直接打开那条
+    const urlId = urlParams.get('id');
+    if (urlId) {
+      fetch(`/api/memories/${urlId}`).then(r => r.json()).then(m => {
+        if (m && !m.error) openModal(m);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "name": "Her Claudes' Memory",
+  "short_name": "Memory",
+  "description": "Three rooms for her Claudes: the pink home, the deep-sea library, the warm paper board.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf4f0",
+  "theme_color": "#e89aab",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
