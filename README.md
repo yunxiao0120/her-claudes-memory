@@ -24,6 +24,16 @@ A companion web app (and PWA) for managing cross-session memory across multiple 
 
 ---
 
+## Screenshots
+
+| Home | Memory | Board |
+|:---:|:---:|:---:|
+| ![home](docs/screenshots/home.png) | ![memory](docs/screenshots/memory.png) | ![board](docs/screenshots/board.png) |
+
+*(Screenshots taken with demo data. The home page shows the latest memory card, personality quick-jump buttons, and the memory/board entrances. Memory page shows deep-sea background with drifting fish, pagination, and the filterable memory list. Board page shows the bulletin-board view with scattered pinned notes, from/to filters, and the private-letter toggle.)*
+
+---
+
 ## Architecture
 
 ```
