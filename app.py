@@ -1,51 +1,41 @@
 """
-her-memory REST API
-===================
+memory-frontend REST API
+========================
 Lightweight Starlette app wrapping imprint_memory functions so the
-frontend (static/*.html) can read/write memories and messages
+frontend (memory.xinlibond.com/ui) can read/write memories and messages
 without going through MCP.
 
-Run:
-    python app.py
-
-Environment variables:
-    HER_MEMORY_PORT         default 8001
-    HER_MEMORY_HOST         default 127.0.0.1
-    HER_MEMORY_ENUMS_PATH   default ./config/enums.json
+Deploy location: /home/admin/memory-api/app.py on aliyun server
+Run: python3.11 app.py (serves on port 8001)
+Reverse-proxied under memory.xinlibond.com/api/ by nginx
 """
 import json
-import os
 import sys
 from starlette.applications import Starlette
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 from starlette.requests import Request
 
+sys.path.insert(0, '/home/admin/.local/lib/python3.11/site-packages')
 from imprint_memory import memory_manager as mm
 from imprint_memory import bus
 
 
-# ---------- config ----------
-PORT = int(os.environ.get('HER_MEMORY_PORT', '8001'))
-HOST = os.environ.get('HER_MEMORY_HOST', '127.0.0.1')
-ENUMS_PATH = os.environ.get(
-    'HER_MEMORY_ENUMS_PATH',
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config', 'enums.json'),
-)
+# ---------- enums (动态从 /home/admin/memory-api/enums.json 读) ----------
+ENUMS_PATH = '/home/admin/memory-api/enums.json'
 
-
-# ---------- enums (loaded dynamically from JSON) ----------
 
 def _load_enums():
-    """Load allowed names and categories from ENUMS_PATH.
-    Falls back to permissive defaults if file missing or corrupt."""
     try:
         with open(ENUMS_PATH) as f:
             data = json.load(f)
-        return set(data.get('names', [])), set(data.get('categories', []))
+        names = set(data.get('names', []))
+        categories = set(data.get('categories', []))
+        return names, categories
     except Exception:
+        # Fallback 如果文件坏了
         return (
-            set(),  # empty names → allow any (or configure via /api/admin)
+            {'cc', 'atou', 'ashen', 'adu', 'feifei', 'catherine', 'other'},
             {'fact', 'event', 'feeling', 'story', 'letter', 'other'},
         )
 
@@ -87,16 +77,15 @@ async def get_memory(request: Request):
 
 
 async def create_memory(request: Request):
-    """POST /api/memories  body: {content, category?, name?/source?, importance?, tags?}
-    If the configured names enum is non-empty, name must be in it.
-    category always validated against categories enum."""
+    """POST /api/memories  body: {content, category?, name?/source?, importance?, tags?}"""
     data = await request.json()
     content = data.get('content', '').strip()
     if not content:
         return JSONResponse({'error': 'content required'}, status_code=400)
-    name = (data.get('name') or data.get('source') or 'assistant').strip()
+    # name is alias for source
+    name = (data.get('name') or data.get('source') or 'cc').strip()
     allowed_names, allowed_categories = _load_enums()
-    if allowed_names and name not in allowed_names:
+    if name not in allowed_names:
         return JSONResponse(
             {'error': f'name must be one of: {", ".join(sorted(allowed_names))}'},
             status_code=400,
@@ -143,7 +132,7 @@ async def delete_memory(request: Request):
     return JSONResponse(result)
 
 
-# ---------- message bus (optional, short transactional messages) ----------
+# ---------- message bus (board) ----------
 
 async def list_messages(request: Request):
     """GET /api/messages?limit=50"""
@@ -167,9 +156,37 @@ async def post_message(request: Request):
     return JSONResponse({'ok': True})
 
 
-# ---------- enums ----------
+# ---------- bulletin board ----------
+
+async def get_bulletin(request: Request):
+    """GET /api/board/bulletin — return raw markdown content of config/board.md"""
+    path = '/home/admin/memory-api/config/board.md'
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return JSONResponse({'markdown': f.read()})
+    except FileNotFoundError:
+        return JSONResponse({'markdown': ''})
+
+async def put_bulletin(request: Request):
+    """PUT /api/board/bulletin — replace whole markdown content of config/board.md
+       body: {"markdown": "..."}"""
+    data = await request.json()
+    md = data.get('markdown', '')
+    path = '/home/admin/memory-api/config/board.md'
+    try:
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(md)
+        return JSONResponse({'ok': True})
+    except Exception as e:
+        return JSONResponse({'error': str(e)}, status_code=500)
+
+
+
+
+# ---------- enums exposure ----------
 
 async def get_enums(request: Request):
+    """GET /api/enums — return allowed source names and categories"""
     names, categories = _load_enums()
     return JSONResponse({
         'names': sorted(names),
@@ -180,7 +197,7 @@ async def get_enums(request: Request):
 # ---------- health ----------
 
 async def health(request: Request):
-    return JSONResponse({'ok': True, 'service': 'her-memory-api'})
+    return JSONResponse({'ok': True, 'service': 'memory-api'})
 
 
 routes = [
@@ -194,6 +211,8 @@ routes = [
     Route('/api/search', search_memories, methods=['GET']),
     Route('/api/messages', list_messages, methods=['GET']),
     Route('/api/messages', post_message, methods=['POST']),
+    Route('/api/board/bulletin', get_bulletin, methods=['GET']),
+    Route('/api/board/bulletin', put_bulletin, methods=['PUT']),
 ]
 
 
@@ -202,4 +221,4 @@ app = Starlette(routes=routes)
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host=HOST, port=PORT)
+    uvicorn.run(app, host='127.0.0.1', port=8001)

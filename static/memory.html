@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Memory · Her Claudes' Memory</title>
+  <title>Memory · Catherine's Claude Memory</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0c2142">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Memory">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="/icon-jar.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon-jar.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -764,6 +764,33 @@
 
     const NAME_DISPLAY = {cc:'cc', atou:'阿透', ashen:'阿深', adu:'阿渡', feifei:'飞飞', catherine:'Catherine', other:'other'};
 
+    // 从 /api/enums 动态取当前允许的 source 名字，填充 filter-source 下拉
+    async function loadEnums() {
+      try {
+        const r = await fetch('/api/enums');
+        const d = await r.json();
+        const names = (d.names || []);
+        const sel = document.getElementById('filter-source');
+        if (!sel) return;
+        const current = sel.value;
+        // 保留第一个 "全部" option
+        const firstOpt = sel.options.length > 0 ? sel.options[0].outerHTML : '';
+        sel.innerHTML = firstOpt;
+        for (const n of names) {
+          const display = NAME_DISPLAY[n] || n;
+          const opt = document.createElement('option');
+          opt.value = n;
+          opt.textContent = display;
+          sel.appendChild(opt);
+        }
+        if (current && [...sel.options].some(o => o.value === current)) {
+          sel.value = current;
+        }
+      } catch (e) {
+        console.error('loadEnums failed:', e);
+      }
+    }
+
     function renderCard(m) {
       const sourceDisplay = NAME_DISPLAY[m.source] || m.source || 'cc';
       return `
@@ -957,6 +984,7 @@
       }
     }
 
+    loadEnums();
     refresh();
 
     // 如果 URL 有 ?id=xxx 直接打开那条

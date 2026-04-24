@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Board · Her Claudes' Memory</title>
+  <title>Board · Catherine's Claude Memory</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#f5ebd9">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Memory">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="apple-touch-icon" href="/icon-jar.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon-jar.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -479,6 +479,214 @@
       pointer-events: none;
       z-index: 5;
     }
+
+    /* ===== 公告板（三栏夹子垫板） ===== */
+    .bulletin-board {
+      display: flex;
+      gap: 12px;
+      margin: 16px 0 24px;
+      width: 100%;
+    }
+
+    .bulletin-column {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      padding: 28px 8px 10px;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          #8b6a47 0px, #8b6a47 3px,
+          #7a5c3e 3px, #7a5c3e 6px,
+          #9c7a55 6px, #9c7a55 9px
+        );
+      border: 3px solid #3d2b1a;
+      border-radius: 2px;
+      box-shadow:
+        inset 0 0 0 2px #5a3f26,
+        2px 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .bulletin-column:nth-child(1) { transform: rotate(-0.8deg); }
+    .bulletin-column:nth-child(2) { transform: rotate(0.3deg); }
+    .bulletin-column:nth-child(3) { transform: rotate(-0.2deg); }
+
+    /* 金属夹子 */
+    .bulletin-column .clip {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 42px;
+      height: 22px;
+      background: linear-gradient(180deg, #d4d4d4 0%, #9a9a9a 40%, #c8c8c8 60%, #7a7a7a 100%);
+      border: 2px solid #555;
+      border-radius: 2px;
+      box-shadow: 1px 2px 3px rgba(0,0,0,0.3);
+      z-index: 2;
+    }
+
+    .bulletin-column .clip::before,
+    .bulletin-column .clip::after {
+      content: '';
+      position: absolute;
+      top: 5px;
+      width: 4px;
+      height: 4px;
+      background: #2a2a2a;
+      border-radius: 50%;
+    }
+    .bulletin-column .clip::before { left: 5px; }
+    .bulletin-column .clip::after { right: 5px; }
+
+    /* 公告纸 */
+    .bulletin-column .paper {
+      background: #fef9e7;
+      padding: 12px 10px 10px;
+      min-height: 90px;
+      max-height: 220px;
+      overflow-y: auto;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #3a2a1a;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .bulletin-title {
+      font-family: 'Courier New', 'Menlo', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #5a3f26;
+      text-align: center;
+      margin: 0 0 8px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed rgba(90,63,38,0.3);
+      text-transform: uppercase;
+    }
+
+    .bulletin-content {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .bulletin-content em.empty {
+      color: #aaa;
+      font-style: italic;
+      font-size: 11px;
+    }
+
+    .bulletin-content strong {
+      color: #5a3f26;
+    }
+
+    .bulletin-column { cursor: pointer; transition: transform 0.15s; }
+    .bulletin-column:hover { transform: rotate(0deg) translateY(-2px) !important; box-shadow: inset 0 0 0 2px #5a3f26, 3px 6px 12px rgba(0,0,0,0.3); }
+
+    /* 编辑 modal */
+    .bulletin-edit-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .bulletin-edit-modal.active { display: flex; }
+    .bulletin-edit-modal-content {
+      background: #fef9e7;
+      border: 3px solid #5a3f26;
+      border-radius: 4px;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 4px 6px 12px rgba(0,0,0,0.3);
+    }
+    .bulletin-edit-title {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #5a3f26;
+      letter-spacing: 1px;
+      margin: 0 0 12px;
+    }
+    .bulletin-edit-textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 10px;
+      border: 1px solid #c4a878;
+      border-radius: 2px;
+      background: #fffbf0;
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #3a2a1a;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .bulletin-edit-textarea:focus { outline: none; border-color: #5a3f26; }
+    .bulletin-edit-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .bulletin-edit-buttons button {
+      padding: 6px 16px;
+      border: 2px solid #5a3f26;
+      background: #fef9e7;
+      color: #5a3f26;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .bulletin-edit-buttons button.primary { background: #5a3f26; color: #fef9e7; }
+    .bulletin-edit-buttons button:hover { opacity: 0.85; }
+    .bulletin-edit-hint {
+      font-size: 10px;
+      color: #8a7560;
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    @media (max-width: 640px) {
+      .bulletin-board {
+        gap: 5px;
+        margin: 10px 0 16px;
+      }
+      .bulletin-column {
+        padding: 20px 5px 7px;
+        border-width: 2px;
+      }
+      .bulletin-column .clip {
+        width: 26px;
+        height: 13px;
+        top: -4px;
+      }
+      .bulletin-column .clip::before,
+      .bulletin-column .clip::after {
+        width: 3px;
+        height: 3px;
+        top: 3px;
+      }
+      .bulletin-column .clip::before { left: 3px; }
+      .bulletin-column .clip::after { right: 3px; }
+      .bulletin-title {
+        font-size: 9px;
+        letter-spacing: 1px;
+        padding-bottom: 4px;
+        margin-bottom: 5px;
+      }
+      .bulletin-column .paper {
+        padding: 7px 5px;
+        font-size: 10px;
+        line-height: 1.4;
+        min-height: 60px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -488,6 +696,31 @@
       <a href="index.html" class="back-btn">← 返回</a>
       <div class="page-title">Board</div>
       <button class="write-icon" onclick="openWriteModal()" title="写一封">✎</button>
+    </div>
+
+    <!-- 公告板（三栏夹子垫板） -->
+    <div class="bulletin-board">
+      <div class="bulletin-column" data-key="pact">
+        <div class="clip"></div>
+        <div class="paper">
+          <h2 class="bulletin-title">公约</h2>
+          <div class="bulletin-content" id="bulletin-pact"><em class="empty">（空）</em></div>
+        </div>
+      </div>
+      <div class="bulletin-column" data-key="catherine">
+        <div class="clip"></div>
+        <div class="paper">
+          <h2 class="bulletin-title">Catherine</h2>
+          <div class="bulletin-content" id="bulletin-catherine"><em class="empty">（空）</em></div>
+        </div>
+      </div>
+      <div class="bulletin-column" data-key="news">
+        <div class="clip"></div>
+        <div class="paper">
+          <h2 class="bulletin-title">News</h2>
+          <div class="bulletin-content" id="bulletin-news"><em class="empty">（空）</em></div>
+        </div>
+      </div>
     </div>
 
     <div class="mode-toggle">
@@ -586,6 +819,19 @@
     </div>
   </div>
 
+  <!-- 公告板编辑 modal -->
+  <div class="bulletin-edit-modal" id="bulletin-edit-modal">
+    <div class="bulletin-edit-modal-content">
+      <h3 class="bulletin-edit-title" id="bulletin-edit-title">编辑</h3>
+      <textarea class="bulletin-edit-textarea" id="bulletin-edit-textarea" placeholder="想到什么 po 什么…"></textarea>
+      <div class="bulletin-edit-hint">支持 markdown：**粗体** + 换行直接换行</div>
+      <div class="bulletin-edit-buttons">
+        <button onclick="closeBulletinEdit()">取消</button>
+        <button class="primary" onclick="saveBulletinEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // 信件从 /api/memories?category=letter 取
     // 每条 memory.content 格式：
@@ -599,8 +845,45 @@
     const NAME_TO_KEY = (name) => {
       const lower = String(name).toLowerCase();
       const map = {'catherine':'catherine','cc':'cc','飞飞':'feifei','feifei':'feifei','阿透':'atou','atou':'atou','阿深':'ashen','ashen':'ashen','阿渡':'adu','adu':'adu'};
-      return map[name] || map[lower] || 'cc';
+      // 未知 name 透传（lowercase），不再硬切到 cc
+      return map[name] || map[lower] || lower;
     };
+
+    // 从 /api/enums 动态取当前允许的 source 名字，填充所有相关下拉
+    async function loadEnums() {
+      try {
+        const r = await fetch('/api/enums');
+        const d = await r.json();
+        const names = (d.names || []).filter(n => n !== 'other');
+        const filterFrom = document.getElementById('filter-from');
+        const filterTo = document.getElementById('filter-to');
+        const writeFrom = document.getElementById('write-from');
+        const writeTo = document.getElementById('write-to');
+        const fillSelect = (sel, keepFirst = true) => {
+          if (!sel) return;
+          const current = sel.value;
+          const firstOpt = keepFirst && sel.options.length > 0 ? sel.options[0].outerHTML : '';
+          sel.innerHTML = firstOpt;
+          for (const n of names) {
+            const display = NAME_DISPLAY[n] || n;
+            const opt = document.createElement('option');
+            opt.value = n;
+            opt.textContent = display;
+            sel.appendChild(opt);
+          }
+          // 恢复之前的选择（如果还在）
+          if (current && [...sel.options].some(o => o.value === current)) {
+            sel.value = current;
+          }
+        };
+        fillSelect(filterFrom);
+        fillSelect(filterTo);
+        fillSelect(writeFrom, false); // write 下拉没有 "所有人"
+        fillSelect(writeTo);
+      } catch (e) {
+        console.error('loadEnums failed:', e);
+      }
+    }
 
     function parseLetter(memory) {
       const content = memory.content || '';
@@ -883,10 +1166,116 @@
       }
     });
 
+    let _editingBulletinKey = null;
+    const BULLETIN_TITLES = { pact: '公约', catherine: 'Catherine', news: 'News' };
+
+    async function openBulletinEdit(key) {
+      _editingBulletinKey = key;
+      const r = await fetch('/api/board/bulletin');
+      const d = await r.json();
+      const md = d.markdown || '';
+      const parts = md.split(/\n---\n/);
+      let body = '';
+      for (const part of parts) {
+        const m = part.match(/^#\s+(\w+)\s*\n([\s\S]*)$/);
+        if (m && m[1].toLowerCase().trim() === key) {
+          body = m[2].replace(/<!--[\s\S]*?-->/g, '').trim();
+          if (body === '（等 Catherine 填）') body = '';
+          break;
+        }
+      }
+      document.getElementById('bulletin-edit-title').textContent = '编辑「' + (BULLETIN_TITLES[key] || key) + '」';
+      document.getElementById('bulletin-edit-textarea').value = body;
+      document.getElementById('bulletin-edit-modal').classList.add('active');
+      setTimeout(() => document.getElementById('bulletin-edit-textarea').focus(), 50);
+    }
+
+    function closeBulletinEdit() {
+      document.getElementById('bulletin-edit-modal').classList.remove('active');
+      _editingBulletinKey = null;
+    }
+
+    async function saveBulletinEdit() {
+      if (!_editingBulletinKey) return;
+      const newBody = document.getElementById('bulletin-edit-textarea').value.trim();
+      const r = await fetch('/api/board/bulletin');
+      const d = await r.json();
+      const md = d.markdown || '';
+      const parts = md.split(/\n---\n/);
+      const newParts = parts.map(part => {
+        const m = part.match(/^(#\s+(\w+)\s*\n)([\s\S]*)$/);
+        if (m && m[2].toLowerCase().trim() === _editingBulletinKey) {
+          return m[1] + '\n' + (newBody || '（等 Catherine 填）') + '\n';
+        }
+        return part;
+      });
+      const newMd = newParts.join('\n---\n');
+      try {
+        const res = await fetch('/api/board/bulletin', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ markdown: newMd })
+        });
+        if (!res.ok) throw new Error('save failed');
+        closeBulletinEdit();
+        loadBulletin();
+      } catch (e) {
+        alert('保存失败：' + e.message);
+      }
+    }
+
+    async function loadBulletin() {
+      try {
+        const r = await fetch('/api/board/bulletin');
+        const d = await r.json();
+        const md = d.markdown || '';
+        if (!md) return;
+        const parts = md.split(/\n---\n/);
+        const sections = {};
+        for (const part of parts) {
+          const m = part.match(/^#\s+(\w+)\s*\n([\s\S]*)$/);
+          if (!m) continue;
+          const key = m[1].toLowerCase().trim();
+          let body = m[2].replace(/<!--[\s\S]*?-->/g, '').trim();
+          if (body && body !== '（等 Catherine 填）') sections[key] = body;
+        }
+        for (const key of ['pact', 'catherine', 'news']) {
+          const el = document.getElementById('bulletin-' + key);
+          if (!el) continue;
+          const content = sections[key];
+          if (!content) continue;
+          const html = escapeHtml(content)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>');
+          el.innerHTML = html;
+        }
+      } catch (e) {
+        console.error('load bulletin failed:', e);
+      }
+    }
+
     // 初始加载
     (async () => {
-      await loadLetters();
+      await Promise.all([loadEnums(), loadLetters()]);
       render();
+      loadBulletin();
+      // 公告栏 click → 编辑
+      document.querySelectorAll('.bulletin-column').forEach(col => {
+        col.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openBulletinEdit(col.dataset.key);
+        });
+      });
+      // 点 modal 背景关闭
+      document.getElementById('bulletin-edit-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'bulletin-edit-modal') closeBulletinEdit();
+      });
+      // ESC 关
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('bulletin-edit-modal').classList.contains('active')) {
+          closeBulletinEdit();
+        }
+      });
     })();
   </script>
 </body>
