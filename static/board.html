@@ -583,6 +583,51 @@
     .bulletin-column { cursor: pointer; transition: transform 0.15s; }
     .bulletin-column:hover { transform: rotate(0deg) translateY(-2px) !important; box-shadow: inset 0 0 0 2px #5a3f26, 3px 6px 12px rgba(0,0,0,0.3); }
 
+    /* 星星行（写入反馈 + 近 30 天计数） */
+    .bulletin-stars {
+      text-align: center;
+      font-size: 11px;
+      margin-bottom: 6px;
+      min-height: 14px;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+    .bulletin-star {
+      display: inline-block;
+      transition: transform 0.3s;
+    }
+    .bulletin-star.star-pop {
+      animation: starPop 1.5s ease-out;
+    }
+    @keyframes starPop {
+      0% { transform: scale(1); filter: brightness(1); }
+      20% { transform: scale(2); filter: brightness(1.6) drop-shadow(0 0 6px gold); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+
+    /* 单条消息 */
+    .bulletin-message {
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px dotted rgba(90,63,38,0.18);
+    }
+    .bulletin-message:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .bulletin-msg-text {
+      margin-bottom: 3px;
+      word-break: break-word;
+    }
+    .bulletin-time {
+      font-size: 9px;
+      color: #8a7560;
+      text-align: right;
+      letter-spacing: 0.3px;
+      font-style: italic;
+    }
+
     /* 编辑 modal */
     .bulletin-edit-modal {
       display: none;
@@ -704,6 +749,7 @@
         <div class="clip"></div>
         <div class="paper">
           <h2 class="bulletin-title">公约</h2>
+          <div class="bulletin-stars" id="bulletin-stars-pact"></div>
           <div class="bulletin-content" id="bulletin-pact"><em class="empty">（空）</em></div>
         </div>
       </div>
@@ -711,6 +757,7 @@
         <div class="clip"></div>
         <div class="paper">
           <h2 class="bulletin-title">Catherine</h2>
+          <div class="bulletin-stars" id="bulletin-stars-catherine"></div>
           <div class="bulletin-content" id="bulletin-catherine"><em class="empty">（空）</em></div>
         </div>
       </div>
@@ -718,6 +765,7 @@
         <div class="clip"></div>
         <div class="paper">
           <h2 class="bulletin-title">News</h2>
+          <div class="bulletin-stars" id="bulletin-stars-news"></div>
           <div class="bulletin-content" id="bulletin-news"><em class="empty">（空）</em></div>
         </div>
       </div>
@@ -1169,23 +1217,24 @@
     let _editingBulletinKey = null;
     const BULLETIN_TITLES = { pact: '公约', catherine: 'Catherine', news: 'News' };
 
-    async function openBulletinEdit(key) {
-      _editingBulletinKey = key;
-      const r = await fetch('/api/board/bulletin');
-      const d = await r.json();
-      const md = d.markdown || '';
-      const parts = md.split(/\n---\n/);
-      let body = '';
-      for (const part of parts) {
-        const m = part.match(/^#\s+(\w+)\s*\n([\s\S]*)$/);
-        if (m && m[1].toLowerCase().trim() === key) {
-          body = m[2].replace(/<!--[\s\S]*?-->/g, '').trim();
-          if (body === '（等 Catherine 填）') body = '';
-          break;
-        }
+    function formatRelTime(iso) {
+      const d = new Date(iso);
+      const diff = (Date.now() - d.getTime()) / 1000;
+      if (diff < 60) return '刚刚';
+      if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+      if (diff < 86400) {
+        const h = String(d.getHours()).padStart(2, '0');
+        const m = String(d.getMinutes()).padStart(2, '0');
+        return `今天 ${h}:${m}`;
       }
-      document.getElementById('bulletin-edit-title').textContent = '编辑「' + (BULLETIN_TITLES[key] || key) + '」';
-      document.getElementById('bulletin-edit-textarea').value = body;
+      if (diff < 86400 * 7) return Math.floor(diff / 86400) + ' 天前';
+      return `${d.getMonth() + 1}-${d.getDate()}`;
+    }
+
+    function openBulletinEdit(key) {
+      _editingBulletinKey = key;
+      document.getElementById('bulletin-edit-title').textContent = '+ 写一条到「' + (BULLETIN_TITLES[key] || key) + '」';
+      document.getElementById('bulletin-edit-textarea').value = '';
       document.getElementById('bulletin-edit-modal').classList.add('active');
       setTimeout(() => document.getElementById('bulletin-edit-textarea').focus(), 50);
     }
@@ -1197,28 +1246,28 @@
 
     async function saveBulletinEdit() {
       if (!_editingBulletinKey) return;
-      const newBody = document.getElementById('bulletin-edit-textarea').value.trim();
-      const r = await fetch('/api/board/bulletin');
-      const d = await r.json();
-      const md = d.markdown || '';
-      const parts = md.split(/\n---\n/);
-      const newParts = parts.map(part => {
-        const m = part.match(/^(#\s+(\w+)\s*\n)([\s\S]*)$/);
-        if (m && m[2].toLowerCase().trim() === _editingBulletinKey) {
-          return m[1] + '\n' + (newBody || '（等 Catherine 填）') + '\n';
-        }
-        return part;
-      });
-      const newMd = newParts.join('\n---\n');
+      const newContent = document.getElementById('bulletin-edit-textarea').value.trim();
+      if (!newContent) return;
+      const savedKey = _editingBulletinKey;
       try {
         const res = await fetch('/api/board/bulletin', {
-          method: 'PUT',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ markdown: newMd })
+          body: JSON.stringify({ section: savedKey, content: newContent })
         });
         if (!res.ok) throw new Error('save failed');
         closeBulletinEdit();
-        loadBulletin();
+        await loadBulletin();
+        // 闪烁最新一颗星（最后一个 .bulletin-star）
+        const starsEl = document.getElementById('bulletin-stars-' + savedKey);
+        if (starsEl) {
+          const stars = starsEl.querySelectorAll('.bulletin-star');
+          if (stars.length > 0) {
+            const last = stars[stars.length - 1];
+            last.classList.add('star-pop');
+            setTimeout(() => last.classList.remove('star-pop'), 1500);
+          }
+        }
       } catch (e) {
         alert('保存失败：' + e.message);
       }
@@ -1227,27 +1276,36 @@
     async function loadBulletin() {
       try {
         const r = await fetch('/api/board/bulletin');
-        const d = await r.json();
-        const md = d.markdown || '';
-        if (!md) return;
-        const parts = md.split(/\n---\n/);
-        const sections = {};
-        for (const part of parts) {
-          const m = part.match(/^#\s+(\w+)\s*\n([\s\S]*)$/);
-          if (!m) continue;
-          const key = m[1].toLowerCase().trim();
-          let body = m[2].replace(/<!--[\s\S]*?-->/g, '').trim();
-          if (body && body !== '（等 Catherine 填）') sections[key] = body;
-        }
+        const data = await r.json();
+        const now = Date.now();
+        const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
         for (const key of ['pact', 'catherine', 'news']) {
-          const el = document.getElementById('bulletin-' + key);
-          if (!el) continue;
-          const content = sections[key];
-          if (!content) continue;
-          const html = escapeHtml(content)
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\n/g, '<br>');
-          el.innerHTML = html;
+          const messages = data[key] || [];
+          const contentEl = document.getElementById('bulletin-' + key);
+          const starsEl = document.getElementById('bulletin-stars-' + key);
+          // 渲染消息列表（按时间倒序——backend 已排好）
+          if (!contentEl) continue;
+          if (messages.length === 0) {
+            contentEl.innerHTML = '<em class="empty">（空）</em>';
+          } else {
+            contentEl.innerHTML = messages.map(m => {
+              const text = escapeHtml(m.content || '')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+              const time = formatRelTime(m.timestamp);
+              return `<div class="bulletin-message"><div class="bulletin-msg-text">${text}</div><div class="bulletin-time">${time}</div></div>`;
+            }).join('');
+          }
+          // 渲染星星——近 30 天内的消息数
+          if (!starsEl) continue;
+          const recentCount = messages.filter(m => {
+            const t = new Date(m.timestamp).getTime();
+            return !isNaN(t) && t >= thirtyDaysAgo;
+          }).length;
+          const cap = Math.min(recentCount, 30);
+          let starsHtml = '';
+          for (let i = 0; i < cap; i++) starsHtml += '<span class="bulletin-star">⭐</span>';
+          starsEl.innerHTML = starsHtml;
         }
       } catch (e) {
         console.error('load bulletin failed:', e);

@@ -159,26 +159,55 @@ async def post_message(request: Request):
 # ---------- bulletin board ----------
 
 async def get_bulletin(request: Request):
-    """GET /api/board/bulletin — return raw markdown content of config/board.md"""
-    path = '/home/admin/memory-api/config/board.md'
+    """GET /api/board/bulletin — return messages grouped by section, sorted by timestamp desc"""
+    import json as _json
+    path = '/home/admin/memory-api/config/bulletin.json'
     try:
         with open(path, 'r', encoding='utf-8') as f:
-            return JSONResponse({'markdown': f.read()})
+            data = _json.load(f)
+        messages = data.get('messages', [])
     except FileNotFoundError:
-        return JSONResponse({'markdown': ''})
+        messages = []
+    sections = {'pact': [], 'catherine': [], 'news': []}
+    for m in messages:
+        sec = m.get('section', 'news')
+        if sec in sections:
+            sections[sec].append(m)
+    for sec in sections:
+        sections[sec].sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+    return JSONResponse(sections)
 
-async def put_bulletin(request: Request):
-    """PUT /api/board/bulletin — replace whole markdown content of config/board.md
-       body: {"markdown": "..."}"""
+
+async def post_bulletin(request: Request):
+    """POST /api/board/bulletin — add new message
+       body: {section: 'pact'|'catherine'|'news', content: '...'}"""
+    import json as _json
+    import time as _time
+    from datetime import datetime as _dt, timezone as _tz
     data = await request.json()
-    md = data.get('markdown', '')
-    path = '/home/admin/memory-api/config/board.md'
+    section = (data.get('section') or '').strip()
+    content = (data.get('content') or '').strip()
+    if section not in ('pact', 'catherine', 'news'):
+        return JSONResponse({'error': 'section must be pact/catherine/news'}, status_code=400)
+    if not content:
+        return JSONResponse({'error': 'content required'}, status_code=400)
+    path = '/home/admin/memory-api/config/bulletin.json'
     try:
-        with open(path, 'w', encoding='utf-8') as f:
-            f.write(md)
-        return JSONResponse({'ok': True})
-    except Exception as e:
-        return JSONResponse({'error': str(e)}, status_code=500)
+        with open(path, 'r', encoding='utf-8') as f:
+            d = _json.load(f)
+    except FileNotFoundError:
+        d = {'messages': []}
+    new_id = str(int(_time.time() * 1000))
+    new_msg = {
+        'id': new_id,
+        'section': section,
+        'content': content,
+        'timestamp': _dt.now(_tz.utc).isoformat().replace('+00:00', 'Z'),
+    }
+    d.setdefault('messages', []).append(new_msg)
+    with open(path, 'w', encoding='utf-8') as f:
+        _json.dump(d, f, ensure_ascii=False, indent=2)
+    return JSONResponse({'ok': True, 'id': new_id, 'timestamp': new_msg['timestamp']})
 
 
 
@@ -212,7 +241,7 @@ routes = [
     Route('/api/messages', list_messages, methods=['GET']),
     Route('/api/messages', post_message, methods=['POST']),
     Route('/api/board/bulletin', get_bulletin, methods=['GET']),
-    Route('/api/board/bulletin', put_bulletin, methods=['PUT']),
+    Route('/api/board/bulletin', post_bulletin, methods=['POST']),
 ]
 
 
